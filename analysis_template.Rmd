@@ -1,8 +1,8 @@
 ---
-title: "I"
+title: "Luminiscience"
 output: html_document
 date: Replicathon 2020
-author: Team members names
+author: Corinne Croslyn, Omaris 
 ---
 
 ```{r setup, include=FALSE}
@@ -31,14 +31,13 @@ You may find it helpful to use the version control and code sharing system calle
 library(ggplot2)
 library(gapminder)
 library(tidyverse)
+theme_set(theme_bw())
 ```
 
-```{r reading data}
-rawPharmacoData <- readRDS("~/OneDrive - University of Evansville/2019-2020/Summer 2020/IQ BIO/PR2020replicathon-master/data/rawPharmacoData.rds")
+```{r readingRawdata}
+rawPharmacoData <- readRDS("~/OneDrive - University of Evansville/2019-2020/Summer 2020/IQ BIO/PR2020Replicathon/data/rawPharmacoData.rds")
 
-summarizedPharmacoData <- readRDS("~/OneDrive - University of Evansville/2019-2020/Summer 2020/IQ BIO/PR2020replicathon-master/data/summarizedPharmacoData.rds")
-
-modelSummarizedPharmacoData <- readRDS("~/OneDrive - University of Evansville/2019-2020/Summer 2020/IQ BIO/PR2020replicathon-master/data/modelSummarizedPharmacoData.rds")
+modelSummarizedPharmacoData <- readRDS("~/OneDrive - University of Evansville/2019-2020/Summer 2020/IQ BIO/PR2020Replicathon/data/modelSummarizedPharmacoData.rds")
 ```
 
 1. How many cell-lines are contained in the data?
@@ -73,7 +72,6 @@ rawPharmacoData %>%
     ggtitle("Distributions of viability scores by study")
 ```
 
-
 4. How many viability data points are within the
 expected range according to the definition of viability (e.g. above 0 
 and below 100)? Try to come up with explanations about
@@ -105,15 +103,37 @@ rawPharmacoData %>%
 5. Read the csv file containing the summarized data. What kinds
 of variables are in the data? What does each column represent?
 ```{r readingSummarizedData}
-
+summarizedPharmacoData <- readRDS("~/OneDrive - University of Evansville/2019-2020/Summer 2020/IQ BIO/PR2020Replicathon/data/summarizedPharmacoData.rds")
 ```
+
+```{r exploringSummarized}
+head(summarizedPharmacoData)
+str(summarizedPharmacoData)
+```
+There are 6 varibles in the summarized data set: cellLine, drug, ic50_CCLE, auc_CCLE, ic50_GDSC, and auc_GDSC. Each column in the dataset is a different variable. 
 
 6. Plot histograms of the viability scores at different levels of drug
 doses. Are stronger drug concentrations consistent with lower viability scores?
+```{r viabilityRawData, fig.width=4, fig.height=8}
+rawPharmacoData %>%
+    ggplot(aes(x =viability)) +
+    geom_histogram(fill = "gray", color = "black") +
+    facet_wrap(~ cut_number(concentration, n=5), ncol = 1) +
+    ggtitle("Distributions of viability by concentration")
+```
+
+```{r moreExploration, fig.width=4, fig.height=8}
+rawPharmacoData %>%
+    ggplot(aes(x =viability)) +
+    geom_histogram(fill = "gray", color = "black") +
+    facet_grid(cut_number(concentration, n=5)~study) +
+    ggtitle("Distributions of viability by concentration")
+```
 
 ### Using Correlation Measures to Assess Replicability of Drug Response Studies
 
 1. Create a scatterplot for each drug comparing the AUC in GDSC and CCLE for all cell lines (hint: code from Tutorial 1b may help).
+
 
 2. Calculate correlation coefficients of the AUC in GDSC and CCLE for each drug (hint: code from Tutorial 1b may help). 
 
