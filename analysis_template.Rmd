@@ -133,17 +133,17 @@ rawPharmacoData %>%
 ### Using Correlation Measures to Assess Replicability of Drug Response Studies
 
 1. Create a scatterplot for each drug comparing the AUC in GDSC and CCLE for all cell lines (hint: code from Tutorial 1b may help).
-```{r auc-all-drug-log, fig.width = 10, fig.height = 9}
+```{r auc-all-drug-summarized, fig.width = 10, fig.height = 9}
 summarizedPharmacoData %>%
-    ggplot(aes(x = -log10(auc_GDSC), y = -log10(auc_CCLE))) +
+    ggplot(aes(x = auc_GDSC, y = auc_CCLE)) +
     geom_point(alpha = 1/2, cex = 1/2) + 
     facet_wrap(~ drug) +
-    xlab("-log10(GDSC AUC)") +
-    ylab("-log10(CCLE AUC)") +
-    ggtitle("AUC summaries of cell line response across studies")
+    xlab("GDSC AUC") +
+    ylab("CCLE AUC") +
+    ggtitle("AUC summaries of cell line response across studies (Summerized Data)")
 ```
 
-```{r ic50-all-drug-scaled, fig.width = 10, fig.height = 9}
+```{r ic50-all-drug-scaled-summarized, fig.width = 10, fig.height = 9}
 summarizedPharmacoData %>%
     ggplot(aes(x = -log10(ic50_GDSC / 10^6),
                y = -log10(ic50_CCLE / 10^6))) +
@@ -151,12 +151,34 @@ summarizedPharmacoData %>%
     facet_wrap(~ drug) +
     xlab("-log10(GDSC IC50/10^6)") +
     ylab("-log10(CCLE IC50/10^6)") +
-    ggtitle("IC50 summaries of cell line response across studies")
+    ggtitle("IC50 summaries of cell line response across studies (Summarized Data)")
+```
+
+```{r auc-all-drug-model, fig.width = 10, fig.height = 9}
+modelSummarizedPharmacoData %>%
+    ggplot(aes(x = auc_GDSC, y = auc_CCLE)) +
+    geom_point(alpha = 1/2, cex = 1/2) + 
+    facet_wrap(~ drug) +
+    xlab("GDSC AUC") +
+    ylab("CCLE AUC") +
+    ggtitle("AUC summaries of cell line response across studies (Model Data)")
+```
+
+
+```{r ic50-all-drug-scaled-model, fig.width = 10, fig.height = 9}
+modelSummarizedPharmacoData %>%
+    ggplot(aes(x = ic50_GDSC,
+               y = ic50_CCLE)) +
+    geom_point(cex = 1/2) + 
+    facet_wrap(~ drug) +
+    xlab("GDSC IC50") +
+    ylab("CCLE IC50") +
+    ggtitle("IC50 summaries of cell line response across studies (Model Data)")
 ```
 
 2. Calculate correlation coefficients of the AUC in GDSC and CCLE for each drug (hint: code from Tutorial 1b may help). 
 
-```{r auc-correlation, fig.width=8, fig.height=4}
+```{r auc-correlation-summarized, fig.width=8, fig.height=4}
 AUCdrugCorrs <- summarizedPharmacoData %>% 
     group_by(drug) %>%
     summarize(Pearson_auc  = cor(auc_GDSC, auc_CCLE, method = "pearson"),
@@ -172,11 +194,10 @@ AUCdrugCorrs %>%
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     scale_fill_grey() +
     ylim(-.1, 1) + 
-    ggtitle("Correlation of cell line AUC summaries between studies for each drug")
+    ggtitle("Correlation of cell line AUC summaries between studies for each drug (Summarized Data)")
 ```
 
-```{r ic50-correlation, fig.width=8, fig.height=4}
-## with the tidyverse
+```{r ic50-correlation-summarized, fig.width=8, fig.height=4}
 IC50drugCorrs <- summarizedPharmacoData %>% 
     group_by(drug) %>%
     summarize(Pearson_ic50  = cor(-log10(ic50_GDSC / 10^6), -log10(ic50_CCLE / 10^6), method = "pearson"),
@@ -192,7 +213,45 @@ IC50drugCorrs %>%
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     scale_fill_grey() +
     ylim(0, 1) + 
-    ggtitle("Correlation of cell line IC50 summaries between studies for each drug")
+    ggtitle("Correlation of cell line IC50 summaries between studies for each drug (Summarized Data)")
+```
+
+```{r auc-correlation-model, fig.width=8, fig.height=4}
+AUCdrugCorrsmodel <- modelSummarizedPharmacoData %>% 
+    group_by(drug) %>%
+    summarize(Pearson_auc_model  = cor(auc_GDSC, auc_CCLE, method = "pearson"),
+              Spearman_auc_model = cor(auc_GDSC, auc_CCLE, method = "spearman"))
+
+AUCdrugCorrsmodel <- gather(AUCdrugCorrsmodel, measure, correlation, -drug)
+
+AUCdrugCorrsmodel
+
+AUCdrugCorrsmodel %>%
+    ggplot(aes(x = drug, y = correlation, fill = measure, group = measure)) +
+    geom_bar(stat = "identity", position = position_dodge(), colour = "black") + 
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    scale_fill_grey() +
+    ylim(-.1, 1) + 
+    ggtitle("Correlation of cell line AUC summaries between studies for each drug (Model Data)")
+```
+
+```{r ic50-correlation-model, fig.width=8, fig.height=4}
+IC50drugCorrsmodel <- modelSummarizedPharmacoData %>% 
+    group_by(drug) %>%
+    summarize(Pearson_ic50_model  = cor(-log10(ic50_GDSC / 10^6), -log10(ic50_CCLE / 10^6), method = "pearson"),
+              Spearman_ic50_model = cor(-log10(ic50_GDSC / 10^6), -log10(ic50_CCLE / 10^6), method = "spearman"))
+
+IC50drugCorrsmodel <- gather(IC50drugCorrsmodel, measure, correlation, -drug)
+
+IC50drugCorrsmodel
+
+IC50drugCorrsmodel %>%
+    ggplot(aes(x = drug, y = correlation, fill = measure, group = measure)) +
+    geom_bar(stat = "identity", position = position_dodge(), colour = "black") + 
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    scale_fill_grey() +
+    ylim(0, 1) + 
+    ggtitle("Correlation of cell line IC50 summaries between studies for each drug (Model Data)")
 ```
 3. Based on the scatterplot and correlation values, would you say that they tend to agree? Why or why not?
 
