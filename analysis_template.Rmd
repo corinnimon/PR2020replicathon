@@ -1,5 +1,5 @@
 ---
-title: "Insert your team name here"
+title: "I"
 output: html_document
 date: Replicathon 2020
 author: Team members names
@@ -27,24 +27,86 @@ You may find it helpful to use the version control and code sharing system calle
 
 ### Exploratory analysis of pharmacogenomic data
 
+```{r Loading Use Packages}
+library(ggplot2)
+library(gapminder)
+library(tidyverse)
+```
+
+```{r reading data}
+rawPharmacoData <- readRDS("~/OneDrive - University of Evansville/2019-2020/Summer 2020/IQ BIO/PR2020replicathon-master/data/rawPharmacoData.rds")
+
+summarizedPharmacoData <- readRDS("~/OneDrive - University of Evansville/2019-2020/Summer 2020/IQ BIO/PR2020replicathon-master/data/summarizedPharmacoData.rds")
+
+modelSummarizedPharmacoData <- readRDS("~/OneDrive - University of Evansville/2019-2020/Summer 2020/IQ BIO/PR2020replicathon-master/data/modelSummarizedPharmacoData.rds")
+```
+
 1. How many cell-lines are contained in the data?
+```{r count-uniq}
+length(unique(rawPharmacoData$cellLine))
+length(unique(rawPharmacoData$drug))
+```
+There are 288 cell lines and 15 drugs. 
 
 2. What drug concentrations were used in each study?
+```{r count-conc}
+tapply(rawPharmacoData$concentration, rawPharmacoData$study,
+       function(x) { length(unique(x)) })
+```
+There were 8 drug concentrations in study CCLE, and 32 drug concentrations in study GDSC.
 
-3. Histograms, appart from telling us how the data is
-distributed, can also make evident potential
-problems with the data. Plot a histogram
-of drug viabilities. Does it look as one would
-expect from the description of the data?
+```{r conc-hist, fig.width = 8, fig.height = 4, warning = FALSE}
+rawPharmacoData %>%
+    ggplot(aes(x = log2(concentration))) +
+    geom_histogram(fill = "gray", color = "black") +
+    facet_wrap(~ study) +
+    ggtitle("Distributions of concentrations by study")
+```
+The CCLE study seems much more consistent in their experimental protocol than the GDSC study when the drug concentrations are plotted. 
+
+3. Histograms, apart from telling us how the data is distributed, can also make evident potential problems with the data. Plot a histogram of drug viabilities. Does it look as one would expect from the description of the data?
+```{r log-density, fig.width = 8, fig.height = 4, warning = FALSE}
+rawPharmacoData %>%
+    ggplot(aes(x = viability, group = study, fill = study, color = study)) +
+    geom_density(alpha = 1/4) +
+    xlim(0,170) +
+    ggtitle("Distributions of viability scores by study")
+```
+
 
 4. How many viability data points are within the
 expected range according to the definition of viability (e.g. above 0 
 and below 100)? Try to come up with explanations about
 the values that are out of range. Are these due to technical
 issues? Biology?
+```{r viability-summaries}
+range(rawPharmacoData$viability)
+too_small <- sum(rawPharmacoData$viability < 0)
+too_small
+too_big <- sum(rawPharmacoData$viability > 100)
+too_big
+not_viable <- too_big+too_small
+not_viable
+43427-not_viable
+```
+To be considered viable, cells have to have a viability of >0 but <100. In the raw pharmacodata set, viability ranges from -20 to 319.4919. There are a total of 15,801 data points that are out of the range of viability. Therefore, only 27,626 data points fall in the range of acceptable viability. 
+
+```{r viability-boxplots, fig.width = 8, fig.height = 4, warning = FALSE}
+rawPharmacoData %>%
+    ggplot(aes(y = viability, x = drug, fill = study)) +
+    scale_x_discrete() + 
+    annotate(geom = "rect", ymin = 0, ymax = 100, xmin = -Inf, xmax = Inf,
+             fill = 'black', alpha = 1/6) +
+    geom_boxplot(outlier.alpha = 1/5) +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 1/2)) +
+    ggtitle("Distributions of viability scores by drug and study")
+```
 
 5. Read the csv file containing the summarized data. What kinds
 of variables are in the data? What does each column represent?
+```{r readingSummarizedData}
+
+```
 
 6. Plot histograms of the viability scores at different levels of drug
 doses. Are stronger drug concentrations consistent with lower viability scores?
