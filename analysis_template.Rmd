@@ -32,6 +32,7 @@ library(ggplot2)
 library(gapminder)
 library(tidyverse)
 theme_set(theme_bw())
+library(energy)
 ```
 
 ```{r readingRawdata}
@@ -167,9 +168,9 @@ modelSummarizedPharmacoData %>%
 
 ```{r ic50-all-drug-scaled-model, fig.width = 10, fig.height = 9}
 modelSummarizedPharmacoData %>%
-    ggplot(aes(x = ic50_GDSC,
-               y = ic50_CCLE)) +
-    geom_point(cex = 1/2) + 
+   ggplot(aes(x = -log10(ic50_GDSC / 10^6),
+              y = -log10(ic50_CCLE / 10^6))) +
+    geom_point(alpha= 1/2, cex = 1/2) + 
     facet_wrap(~ drug) +
     xlab("GDSC IC50") +
     ylab("CCLE IC50") +
@@ -219,8 +220,8 @@ IC50drugCorrs %>%
 ```{r auc-correlation-model, fig.width=8, fig.height=4}
 AUCdrugCorrsmodel <- modelSummarizedPharmacoData %>% 
     group_by(drug) %>%
-    summarize(Pearson_auc_model  = cor(auc_GDSC, auc_CCLE, method = "pearson"),
-              Spearman_auc_model = cor(auc_GDSC, auc_CCLE, method = "spearman"))
+    summarize(Pearson_auc_model  = cor(auc_GDSC, auc_CCLE, method = "pearson", use="na.or.complete"),
+              Spearman_auc_model = cor(auc_GDSC, auc_CCLE, method = "spearman", use="na.or.complete"))
 
 AUCdrugCorrsmodel <- gather(AUCdrugCorrsmodel, measure, correlation, -drug)
 
@@ -231,15 +232,15 @@ AUCdrugCorrsmodel %>%
     geom_bar(stat = "identity", position = position_dodge(), colour = "black") + 
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     scale_fill_grey() +
-    ylim(-.1, 1) + 
+    ylim(-.15, 1) + 
     ggtitle("Correlation of cell line AUC summaries between studies for each drug (Model Data)")
 ```
 
 ```{r ic50-correlation-model, fig.width=8, fig.height=4}
 IC50drugCorrsmodel <- modelSummarizedPharmacoData %>% 
     group_by(drug) %>%
-    summarize(Pearson_ic50_model  = cor(-log10(ic50_GDSC / 10^6), -log10(ic50_CCLE / 10^6), method = "pearson"),
-              Spearman_ic50_model = cor(-log10(ic50_GDSC / 10^6), -log10(ic50_CCLE / 10^6), method = "spearman"))
+    summarize(Pearson_ic50_model  = cor(-log10(ic50_GDSC / 10^6), -log10(ic50_CCLE / 10^6), method = "pearson",use="na.or.complete"),
+              Spearman_ic50_model = cor(-log10(ic50_GDSC / 10^6), -log10(ic50_CCLE / 10^6), method = "spearman",use="na.or.complete"))
 
 IC50drugCorrsmodel <- gather(IC50drugCorrsmodel, measure, correlation, -drug)
 
@@ -250,25 +251,26 @@ IC50drugCorrsmodel %>%
     geom_bar(stat = "identity", position = position_dodge(), colour = "black") + 
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     scale_fill_grey() +
-    ylim(0, 1) + 
+    ylim(-.10, 1) + 
     ggtitle("Correlation of cell line IC50 summaries between studies for each drug (Model Data)")
 ```
 3. Based on the scatterplot and correlation values, would you say that they tend to agree? Why or why not?
+They don't tend to agree because the scatterplot and correlation values aren't consistent, especially when you compare the Pearson and the Spearman. The correlations also are not very strong, with few being above .70. Many of the correlations show moderate correlation, falling between .20-.70. 
 
-4. Does the AUC or IC50 suggest more agreement between the studies? 
+4. Does the AUC or IC50 suggest more agreement between the studies?
+In the summarized data, the AUC seems to suggest more agreement than the IC50. Overall, the correlation of AUC seems to be stronger then the IC50, with IC50 having a greater number of weaker correlations (correlations <.25).This could be because the model that IC50 used to predict when cells would reach 50% viability is a bad predictor. 
 
 5. Which drug do you think shows the most consistency between the studies? How about the least? 
+17-AAG seems to be the most consistent across different correlation measures and the scatterplots. Nutilnib seems to be the least consistent across different correlation measures and scatterplots.  
 
-6. If you calculated more than one type of correlation coefficient (for example Pearson and Spearman), how do they differ? Which do you think is a better summary of the consistency between the two studies? 
+6. If you calculated more than one type of correlation coefficient (for example Pearson and Spearman), how do they differ? Which do you think is a better summary of the consistency between the two studies?
+The Pearson correlation coefficient measures the degree of linear between variables, while Spearman's correlation coefficient measures the agreement of the rankings between variables. For interval scale, the Pearson correlation coefficient is typically more appropriate. Therefore, we believe that the Pearson coefficient is more appropriate measure of correlation for this data.  
 
-7. We have explored Pearson and Spearman correlation, but what about other correlation measures? For example, you could try out distance correlation, which is sensitive to nonlinear relationships. You can find this measure in the `energy` R package, which you'll need to install and load with the following commands:
+7. We have explored Pearson and Spearman correlation, but what about other correlation measures? For example, you could try out distance correlation, which is sensitive to nonlinear relationships. Then, you can compute distance correlation with the `dcor()` function. How does this correlation measure compare to Pearson and Spearman? Do your conclusions about the agreement between the two studies change at all using this measure?
 
-    ```{r, eval=FALSE}
-    install.packages("energy")
-    load(energy)
-    ```
-
-    Then, you can compute distance correlation with the `dcor()` function. How does this correlation measure compare to Pearson and Spearman? Do your conclusions about the agreement between the two studies change at all using this measure?
+```{r distance-corr-summarizeddata}
+AUCdistancecorrsum <- dcor(summarizedPharmacoData$auc_GDSC,summarizedPharmacoData$auc_CCLE, index = 1)
+```
 
 ### Identifying biological factors that influence replicability of pharmacogenomic studies
 
