@@ -154,7 +154,7 @@ rawPharmacoData %>%
 
 
 
-#### Create a scatterplot for each drug comparing the AUC in GDSC and CCLE for all cell lines (hint: code from Tutorial 1b may help).
+#### Create a scatterplot for each drug comparing the AUC in GDSC and CCLE for all cell lines.
 ```{r auc-all-drug-summarized, fig.width = 10, fig.height = 9}
 summarizedPharmacoData %>%
     ggplot(aes(x = auc_GDSC, y = auc_CCLE)) +
