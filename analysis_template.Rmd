@@ -203,9 +203,11 @@ modelSummarizedPharmacoData %>%
 
 ```{r auc-correlation-summarized, fig.width=8, fig.height=4}
 AUCdrugCorrs <- summarizedPharmacoData %>% 
+    filter(!is.na(auc_GDSC), !is.na(auc_CCLE)) %>% 
     group_by(drug) %>%
     summarize(Pearson_auc  = cor(auc_GDSC, auc_CCLE, method = "pearson"),
-              Spearman_auc = cor(auc_GDSC, auc_CCLE, method = "spearman"))
+              Spearman_auc = cor(auc_GDSC, auc_CCLE, method = "spearman"),
+               dcor_auc = dcor(auc_GDSC, auc_CCLE,index = 1))
 
 AUCdrugCorrs <- gather(AUCdrugCorrs, measure, correlation, -drug)
 
@@ -221,8 +223,12 @@ AUCdrugCorrs %>%
 ```{r ic50-correlation-summarized, fig.width=8, fig.height=4}
 IC50drugCorrs <- summarizedPharmacoData %>% 
     group_by(drug) %>%
+    filter(!is.na(ic50_GDSC), !is.na(ic50_CCLE)) %>% 
     summarize(Pearson_ic50  = cor(-log10(ic50_GDSC / 10^6), -log10(ic50_CCLE / 10^6), method = "pearson"),
-              Spearman_ic50 = cor(-log10(ic50_GDSC / 10^6), -log10(ic50_CCLE / 10^6), method = "spearman"))
+              Spearman_ic50 = cor(-log10(ic50_GDSC / 10^6), -log10(ic50_CCLE / 10^6), method = "spearman"),
+              dcor_ic50 = dcor(-log10(ic50_GDSC / 10^6),
+                                     -log10(ic50_CCLE / 10^6),
+                                     index = 1))
 
 IC50drugCorrs <- gather(IC50drugCorrs, measure, correlation, -drug)
 
@@ -237,9 +243,11 @@ IC50drugCorrs %>%
 
 ```{r auc-correlation-model, fig.width=8, fig.height=4}
 AUCdrugCorrsmodel <- modelSummarizedPharmacoData %>% 
+     filter(!is.na(auc_GDSC), !is.na(auc_CCLE)) %>%
     group_by(drug) %>%
     summarize(Pearson_auc_model  = cor(auc_GDSC, auc_CCLE, method = "pearson", use="na.or.complete"),
-              Spearman_auc_model = cor(auc_GDSC, auc_CCLE, method = "spearman", use="na.or.complete"))
+              Spearman_auc_model = cor(auc_GDSC, auc_CCLE, method = "spearman", use="na.or.complete"),
+              dcor_auc_model = dcor(auc_GDSC,auc_CCLE,index = 1))
 
 AUCdrugCorrsmodel <- gather(AUCdrugCorrsmodel, measure, correlation, -drug)
 
@@ -254,9 +262,13 @@ AUCdrugCorrsmodel %>%
 
 ```{r ic50-correlation-model, fig.width=8, fig.height=4}
 IC50drugCorrsmodel <- modelSummarizedPharmacoData %>% 
+    filter(!is.na(ic50_GDSC), !is.na(ic50_CCLE)) %>% 
     group_by(drug) %>%
     summarize(Pearson_ic50_model  = cor(-log10(ic50_GDSC / 10^6), -log10(ic50_CCLE / 10^6), method = "pearson",use="na.or.complete"),
-              Spearman_ic50_model = cor(-log10(ic50_GDSC / 10^6), -log10(ic50_CCLE / 10^6), method = "spearman",use="na.or.complete"))
+              Spearman_ic50_model = cor(-log10(ic50_GDSC / 10^6), -log10(ic50_CCLE / 10^6), method = "spearman",use="na.or.complete"),
+              dcor_ic50_model = dcor(-log10(ic50_GDSC / 10^6),
+                                     -log10(ic50_CCLE / 10^6),
+                                     index = 1))
 
 IC50drugCorrsmodel <- gather(IC50drugCorrsmodel, measure, correlation, -drug)
 
@@ -299,6 +311,6 @@ In the summarized data, the AUC seems to suggest more agreement than the IC50. O
 #### If you calculated more than one type of correlation coefficient (for example Pearson and Spearman), how do they differ? Which do you think is a better summary of the consistency between the two studies?
 
 
-The Pearson correlation coefficient measures the degree of linear between variables, while Spearman's correlation coefficient measures the agreement of the rankings between variables. For interval scale, the Pearson correlation coefficient is typically more appropriate. Therefore, we believe that the Pearson coefficient is more appropriate measure of correlation for this data.  
+The Pearson correlation coefficient measures the degree of linear between variables, while Spearman's correlation coefficient measures the agreement of the rankings between variables. The distance correlation coefficient measures both linear and nonlinear association between two variables. For interval scale, the Pearson correlation coefficient is typically more appropriate. Therefore, we believe that the Pearson coefficient is more appropriate measure of correlation for this data. Additionally, the Pearson and the distance correlation coefficients tend to agree with one another even when the Spearman's is vastly different. This supports the use of Pearson's correlation coefficient as a better measure of correlation for this data.  
 
 
